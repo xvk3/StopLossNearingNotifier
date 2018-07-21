@@ -100,8 +100,3 @@ void OnTimer()   {
       }
    }
    return;
-<<<<<<< HEAD
-}
-=======
-}
->>>>>>> a0087d3c04cfd1fb084c098024be76f95fe2634f
