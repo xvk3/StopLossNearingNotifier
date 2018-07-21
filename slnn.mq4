@@ -18,11 +18,11 @@ input double         idHysteresis;           //ProfitChange    : Hysteresis
 
 //initialisation procedure
 int OnInit()  {
-   EventSetTimer(10);
-   SendNotification("Net Notifier Running");
+   EventSetTimer(30);
+   SendNotification("Stop Loss Nearing Notifier Running");
    return(INIT_SUCCEEDED);
 }
-int Count=0;
+
 void OnDeinit(const int reason)  {
    EventKillTimer();
    SendNotification("Net Notifier Stopping");
@@ -54,9 +54,11 @@ int notifyStopLossNearing(int iIndex, double dThreshold, uint uDebounce) {
    case OP_BUY:
       dDifference = Ask - dStopLoss;
       sOrderType = "BUY";
+      break;
    case OP_SELL:
       dDifference = dStopLoss - Bid;
       sOrderType = "SELL";
+      break;
    default:
       Print("notifyStopLossNearing error - invalid order type for procedure");
       return 0;
@@ -80,96 +82,26 @@ int notifyStopLossNearing(int iIndex, double dThreshold, uint uDebounce) {
 
 
   
-bool nofityOnProfitChange(double dHysteresis)   {
+void OnTimer()   {
    int iIndex;
    int iTotalNumberOfOrders = OrdersTotal();
    string sSymbol;
    string sDifference;
    string sNotification;
-  
-  
-   //generate array of booleans to indicate change in profit
-   int bProfitChange[];
-   if(ArrayResize(bProfitChange, iTotalNumberOfOrders) == -1)  {
-      return false;
-   }
-   ArrayFill(bProfitChange, 0, iTotalNumberOfOrders, 0);
-   
+    
    if(!iTotalNumberOfOrders)  {
-      return false;
+      return;
    }
-   double dOpenPrice;
-   double dDifference;
-   
+ 
    for(iIndex = iTotalNumberOfOrders - 1; iIndex >= 0; iIndex--)  {
-      if(!OrderSelect(iIndex, SELECT_BY_POS, MODE_TRADES))   {
-         Print("OrderSelect for order ", iIndex, " failed error : ", GetLastError());
-         continue;
+      if(ibStopLossNearing) {
+         int iReturn = notifyStopLossNearing(iIndex, idThreshold, iuDebounce);
+         Print("notifyStopLossNearing returned: ", iReturn);
       }
-      
-      sSymbol = OrderSymbol();
-      dOpenPrice = OrderOpenPrice();
-      
-      //for longs
-      if(OrderType() == OP_BUY) {
-         //profit for long
-         if(dOpenPrice < Ask) {
-            dDifference = Ask - dOpenPrice;
-            if(bProfitChange[iIndex] == LOSS) {
-               //build string for notification
-               sDifference = DoubleToStr(dDifference, 5);
-               sNotification = StringConcatenate("Change to PROFIT ", sSymbol, " : ", sDifference);
-               SendNotification(sNotification);
-            }
-             bProfitChange[iIndex] = PROFIT;
-         }
-         //loss for long
-         if(dOpenPrice < Ask) {
-            dDifference = dOpenPrice - Ask;
-            if(bProfitChange[iIndex] == PROFIT) {
-               //build string for notification
-               sDifference = DoubleToStr(dDifference, 5);
-               sNotification = StringConcatenate("Change to LOSS ", sSymbol, " : ", sDifference);
-               SendNotification(sNotification);
-            }
-            bProfitChange[iIndex] = LOSS;
-         }
-      }
-      
-      //for shorts
-      if(OrderType() == OP_SELL) {
-         //profit for short
-         if(dOpenPrice > Bid) {
-            dDifference = dOpenPrice - Bid;
-            if(bProfitChange[iIndex] == LOSS) {
-               //build string for notification
-               sDifference = DoubleToStr(dDifference, 5);
-               sNotification = StringConcatenate("Change to PROFIT ", sSymbol, " : ", sDifference);
-               SendNotification(sNotification);
-            }
-             bProfitChange[iIndex] = PROFIT;
-         }
-         //loss for short
-         if(dOpenPrice < Bid) {
-            dDifference = Bid - dOpenPrice;
-            if(bProfitChange[iIndex] == PROFIT) {
-               //build string for notification
-               sDifference = DoubleToStr(dDifference, 5);
-               sNotification = StringConcatenate("Change to LOSS ", sSymbol, " : ", sDifference);
-               SendNotification(sNotification);
-            }
-            bProfitChange[iIndex] = LOSS;
-         }
-      } 
-      
-      Sleep(6001);
-      
-           
    }
-   return true;
+   return;
+<<<<<<< HEAD
 }
-
-void OnTimer() {
-
-   bool returnValue = nofityOnProfitChange(0);
+=======
 }
+>>>>>>> a0087d3c04cfd1fb084c098024be76f95fe2634f
